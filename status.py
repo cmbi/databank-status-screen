@@ -3,6 +3,7 @@ import requests
 from ftplib import FTP
 import tempfile
 from threading import Thread, Lock
+from time import time
 
 
 class StatusChecker(Thread):
@@ -12,11 +13,13 @@ class StatusChecker(Thread):
         self._lock = Lock()
         self._label_text = None
         self._label_color = None
+        self._time = None
 
     def run(self):
         while True:
             try:
                 label_text, label_color = self.get_text_and_color()
+                t = time()
             except Exception as e:
                 label_text = str(e)
                 label_color = "red"
@@ -24,11 +27,12 @@ class StatusChecker(Thread):
             with self._lock:
                 self._label_text = label_text
                 self._label_color = label_color
-
+                self._time = t
 
     def update(self, label):
         with self._lock:
             label.configure(text=self._label_text, bg=self._label_color)
+            return self._time
 
     def get_text_and_color(self):
         raise RuntimeError("Not implemented")

@@ -1,6 +1,7 @@
 import sys
 import os
 import traceback
+from time import localtime, strftime
 
 from tkinter import ttk
 import tkinter
@@ -19,7 +20,7 @@ statusframe.place(relx=0.1, rely=0.1)
 
 status_font = ("Arial", 24)
 status_height = 1
-status_width = 25
+status_width = 20
 status_borderwidth = 1
 status_refief = "solid"
 
@@ -50,14 +51,23 @@ for row, name, checker in [(0, "HOPE", HttpChecker("https://www3.cmbi.umcn.nl/ho
                                 width=status_width, height=status_height)
     value_label.grid(column=1, row=row)
 
-    labels_checkers.append((value_label, checker))
+    time_label = tkinter.Label(statusframe,
+                               bg="white",
+                               borderwidth=status_borderwidth, relief=status_refief,
+                               font=status_font,
+                               width=status_width, height=status_height)
+    time_label.grid(column=2, row=row)
+
+    labels_checkers.append((value_label, checker, time_label))
 
     checker.start()
 
 
 while True:
-    for label, checker in labels_checkers:
-        checker.update(label)
+    for value_label, checker, time_label in labels_checkers:
+        last_time = checker.update(value_label)
+        if last_time is not None:
+            time_label.configure(text=strftime("%Y-%m-%d %T", localtime(last_time)))
 
     tk.update_idletasks()
     tk.update()
