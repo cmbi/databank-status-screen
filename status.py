@@ -11,25 +11,35 @@ class StatusChecker(Thread):
         Thread.__init__(self)
 
         self._lock = Lock()
+        self._time = None
+
+    def update(self, key, label):
+        raise RuntimeError("Not implemented")
+
+
+class SingleStatusChecker(Thread):
+    def __init__(self):
+        StatusChecker.__init__(self)
+
         self._label_text = None
         self._label_color = None
-        self._time = None
 
     def run(self):
         while True:
             try:
                 label_text, label_color = self.get_text_and_color()
-                t = time()
             except Exception as e:
                 label_text = str(e)
                 label_color = "red"
+
+            t = time()
 
             with self._lock:
                 self._label_text = label_text
                 self._label_color = label_color
                 self._time = t
 
-    def update(self, label):
+    def update(self, key, label):
         with self._lock:
             label.configure(text=self._label_text, bg=self._label_color)
             return self._time
@@ -38,9 +48,9 @@ class StatusChecker(Thread):
         raise RuntimeError("Not implemented")
 
 
-class HttpChecker(StatusChecker):
+class HttpChecker(SingleStatusChecker):
     def __init__(self, url):
-        StatusChecker.__init__(self)
+        SingleStatusChecker.__init__(self)
 
         self.url = url
 
@@ -61,9 +71,9 @@ def do_nothing(x):
     pass
 
 
-class FtpChecker(StatusChecker):
+class FtpChecker(SingleStatusChecker):
     def __init__(self, host, dir_path):
-        StatusChecker.__init__(self)
+        SingleStatusChecker.__init__(self)
 
         self.host = host
         self.dir_path = dir_path
@@ -81,9 +91,9 @@ class FtpChecker(StatusChecker):
             return (str(e), "red")
 
 
-class RsyncChecker(StatusChecker):
+class RsyncChecker(SingleStatusChecker):
     def __init__(self, source):
-        StatusChecker.__init__(self)
+        SingleStatusChecker.__init__(self)
 
         self.source = source
 
@@ -103,9 +113,9 @@ class RsyncChecker(StatusChecker):
             return (text, "red")
 
 
-class WhynotChecker(StatusChecker):
+class WhynotChecker(SingleStatusChecker):
     def __init__(self, db):
-        StatusChecker.__init__(self)
+        SingleStatusChecker.__init__(self)
 
         self.db = db
 
@@ -129,3 +139,60 @@ class WhynotChecker(StatusChecker):
         text = "%i unannotated" % count
 
         return (text, color)
+
+
+class HopeStatisticsChecker(StatusChecker):
+    def __init__(self):
+        StatusChecker.__init__(self)
+
+        self._stats = {"FAILURE": None,
+                       "PENDING": None,
+                       "RETRY": None,
+                       "REVOKED": None,
+                       "STARTED": None,
+                       "SUCCESS": None}
+
+    @staticmethod
+    def get_statistics():
+        r = requests.get("https://www3.cmbi.umcn.nl/hope/api/statistics/")
+        r.raise_for_status()
+        return r.json()['statistics']
+
+    def run(self):
+        while True:
+            stats = HopeStatisticsChecker.get_statistics()
+            t = time()
+            with self._lock:
+                try:
+                    self._stats = stats
+                except Exception as e:
+                    for key in self._stats:
+                        self._stats[key] = str(e)
+
+                self._time = t
+
+    @staticmethod
+    def get_color(key, value):
+        if value is None:
+            return None
+
+        elif type(value) != int:
+            return "red"
+
+        if key in ["REVOKED", "RETRY", "FAILURE", "PENDING", "STARTED"]:
+            if value <= 0:
+                return "green"
+
+            elif value < 50:
+                return "yellow"
+            else:
+                return "red"
+        else:
+            return "white"
+
+    def update(self, key, label):
+        with self._lock:
+            label.configure(text=self._stats[key],
+                            bg=HopeStatisticsChecker.get_color(key, self._stats[key]))
+
+        return self._time

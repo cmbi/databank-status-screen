@@ -6,7 +6,7 @@ from time import localtime, strftime
 from tkinter import ttk
 import tkinter
 
-from status import HttpChecker, FtpChecker, RsyncChecker, WhynotChecker
+from status import HttpChecker, FtpChecker, RsyncChecker, WhynotChecker, HopeStatisticsChecker
 
 
 tk = tkinter.Tk()
@@ -58,15 +58,43 @@ for row, name, checker in [(0, "HOPE", HttpChecker("https://www3.cmbi.umcn.nl/ho
                                width=status_width, height=status_height)
     time_label.grid(column=2, row=row)
 
-    labels_checkers.append((value_label, checker, time_label))
+    labels_checkers.append((value_label, None, checker, time_label))
 
     checker.start()
 
 
+hope_label = tkinter.Label(statusframe,
+                           text="HOPE:", bg="white",
+                           borderwidth=status_borderwidth, relief=status_refief,
+                           font=status_font,
+                           width=status_width, height=status_height)
+hope_label.grid(column=0, row=9)
+
+hope_checker = HopeStatisticsChecker()
+
+for row, key in [(10, "PENDING"), (11, "STARTED"), (12, "FAILURE"), (13, "SUCCESS")]:
+
+    name_label = tkinter.Label(statusframe, text=key, bg="white",
+                               borderwidth=status_borderwidth, relief=status_refief,
+                               font=status_font,
+                               width=status_width, height=status_height)
+    name_label.grid(column=0, row=row)
+
+    value_label = tkinter.Label(statusframe,
+                                borderwidth=status_borderwidth, relief=status_refief,
+                                font=status_font,
+                                width=status_width, height=status_height)
+    value_label.grid(column=1, row=row)
+
+    labels_checkers.append((value_label, key, hope_checker, None))
+
+hope_checker.start()
+
+
 while True:
-    for value_label, checker, time_label in labels_checkers:
-        last_time = checker.update(value_label)
-        if last_time is not None:
+    for value_label, key, checker, time_label in labels_checkers:
+        last_time = checker.update(key, value_label)
+        if time_label is not None and last_time is not None:
             time_label.configure(text=strftime("%Y-%m-%d %T", localtime(last_time)))
 
     tk.update_idletasks()
