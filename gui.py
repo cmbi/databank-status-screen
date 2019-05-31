@@ -16,7 +16,7 @@ tk.geometry("800x600")
 tk.grid()
 
 statusframe = tkinter.Frame(tk)
-statusframe.place(relx=0.1, rely=0.1)
+statusframe.place(relx=0.1, rely=0.1, anchor=tkinter.NW)
 
 status_font = ("Arial", 24)
 status_height = 1
@@ -63,9 +63,13 @@ for row, name, checker in [(0, "HOPE", HttpChecker("https://www3.cmbi.umcn.nl/ho
     checker.start()
 
 
-hope_label = tkinter.Label(statusframe,
-                           text="HOPE:", bg="white",
-                           borderwidth=status_borderwidth, relief=status_refief,
+hopeframe = tkinter.Frame(tk)
+hopeframe.place(relx=0.1, rely=0.9, anchor=tkinter.SW)
+
+
+hope_label = tkinter.Label(hopeframe,
+                           text="HOPE:",
+                           borderwidth=0,
                            font=status_font,
                            width=status_width, height=status_height)
 hope_label.grid(column=0, row=9)
@@ -74,13 +78,13 @@ hope_checker = HopeStatisticsChecker()
 
 for row, key in [(10, "PENDING"), (11, "STARTED"), (12, "FAILURE"), (13, "SUCCESS")]:
 
-    name_label = tkinter.Label(statusframe, text=key, bg="white",
+    name_label = tkinter.Label(hopeframe, text=key, bg="white",
                                borderwidth=status_borderwidth, relief=status_refief,
                                font=status_font,
                                width=status_width, height=status_height)
     name_label.grid(column=0, row=row)
 
-    value_label = tkinter.Label(statusframe,
+    value_label = tkinter.Label(hopeframe,
                                 borderwidth=status_borderwidth, relief=status_refief,
                                 font=status_font,
                                 width=status_width, height=status_height)
