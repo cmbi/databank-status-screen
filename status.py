@@ -160,15 +160,15 @@ class HopeStatisticsChecker(StatusChecker):
 
     def run(self):
         while True:
-            stats = HopeStatisticsChecker.get_statistics()
+            try:
+                stats = HopeStatisticsChecker.get_statistics()
+            except Exception as e:
+                for key in stats:
+                    stats[key] = str(e)
             t = time()
-            with self._lock:
-                try:
-                    self._stats = stats
-                except Exception as e:
-                    for key in self._stats:
-                        self._stats[key] = str(e)
 
+            with self._lock:
+                self._stats = stats
                 self._time = t
 
     @staticmethod
