@@ -192,7 +192,10 @@ class HopeStatisticsChecker(StatusChecker):
 
     def update(self, key, label):
         with self._lock:
-            label.configure(text=self._stats[key],
-                            bg=HopeStatisticsChecker.get_color(key, self._stats[key]))
+            if key in self._stats:
+                label.configure(text=self._stats[key],
+                                bg=HopeStatisticsChecker.get_color(key, self._stats[key]))
+            else:
+                label.configure(text='0', bg="green")
 
         return self._time
