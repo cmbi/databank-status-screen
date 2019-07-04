@@ -80,13 +80,12 @@ class FtpChecker(SingleStatusChecker):
 
     def get_text_and_color(self):
         try:
-            ftp = FTP(self.host)
-            ftp.login()
-            ftp.cwd(self.dir_path)
-            ftp.dir(do_nothing)
-            ftp.quit()
+            with FTP(self.host) as ftp:
+                ftp.login()
+                ftp.cwd(self.dir_path)
+                ftp.dir(do_nothing)
 
-            return ("success", "green")
+                return ("success", "green")
         except Exception as e:
             return (str(e), "red")
 
@@ -125,6 +124,8 @@ class WhynotChecker(SingleStatusChecker):
         if r.status_code != 200:
             color = "red"
             text = requests.status_codes._codes[r.status_code][0]
+
+            return (text, color)
 
         count = len(r.text.split())
 
