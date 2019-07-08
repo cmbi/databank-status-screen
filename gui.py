@@ -95,11 +95,13 @@ for row, key in [(10, "PENDING"), (11, "STARTED"), (12, "FAILURE"), (13, "SUCCES
 hope_checker.start()
 
 
-while True:
+def check():
     for value_label, key, checker, time_label in labels_checkers:
         last_time = checker.update(key, value_label)
         if time_label is not None and last_time is not None:
             time_label.configure(text=strftime("%Y-%m-%d %T", localtime(last_time)))
 
-    tk.update_idletasks()
-    tk.update()
+    tk.after(1, check)
+
+check()
+tk.mainloop()
